@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Feelings Wheel</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    --bg: #ffffff;
+    --bg2: #f5f5f5;
+    --text: #111111;
+    --text2: #666666;
+    --border: rgba(0,0,0,0.12);
+    --border2: rgba(0,0,0,0.25);
+    --radius-md: 8px;
+    --radius-lg: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1a1a;
+      --bg2: #242424;
+      --text: #f0f0f0;
+      --text2: #999999;
+      --border: rgba(255,255,255,0.12);
+      --border2: rgba(255,255,255,0.25);
+    }
+  }
+  body { font-family: var(--font-sans); background: var(--bg); color: var(--text); min-height: 100vh; }
+  #fw { padding: 1.5rem 1rem; max-width: 640px; margin: 0 auto; }
+  h1 { font-size: 20px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+  #fw-sub { font-size: 14px; color: var(--text2); margin-bottom: 1.25rem; min-height: 20px; }
+  #canvas-wrap { display: flex; justify-content: center; margin-bottom: 1rem; }
+  canvas { display: block; max-width: 100%; height: auto; cursor: default; }
+  #detail {
+    border: 0.5px solid var(--border);
+    border-left: 3px solid #888;
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    background: var(--bg);
+    display: none;
+    margin-top: 0.5rem;
+  }
+  #detail-label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
+  #detail-name { font-size: 26px; font-weight: 500; color: var(--text); margin-bottom: 8px; }
+  #detail-path { font-size: 12px; color: var(--text2); margin-bottom: 12px; }
+  #detail-def { font-size: 14px; color: var(--text); line-height: 1.6; margin-bottom: 12px; }
+  #detail-note {
+    font-size: 13px; color: var(--text2); font-style: italic; line-height: 1.5;
+    border-left: 2px solid var(--border2); padding-left: 10px; display: none;
+  }
+  #back-btn {
+    margin-top: 14px; background: none; border: 0.5px solid var(--border2);
+    border-radius: var(--radius-md); padding: 7px 16px; font-size: 13px;
+    color: var(--text); cursor: pointer; font-family: var(--font-sans);
+  }
+  #back-btn:hover { background: var(--bg2); }
+</style>
+</head>
+<body>
+<div id="fw">
+  <h1>Feelings wheel</h1>
+  <div id="fw-sub">Click a segment to explore</div>
+  <div id="canvas-wrap"><canvas id="c" width="520" height="520"></canvas></div>
+  <div id="detail">
+    <div id="detail-label">You're feeling</div>
+    <div id="detail-name"></div>
+    <div id="detail-path"></div>
+    <div id="detail-def"></div>
+    <div id="detail-note"></div>
+    <button id="back-btn" onclick="goBack()">Back</button>
+  </div>
+</div>
+<script>
+const W=520,CX=260,CY=260;
+const R0=48,R3=255;
+
+const wheel=[
+  {label:"Angry",color:"#E05252",children:[
+    {label:"Hurt",children:["Embarrassed","Betrayed","Dismissed","Ridiculed"]},
+    {label:"Threatened",children:["Nervous","Exposed","Rejected","Inadequate"]},
+    {label:"Hateful",children:["Resentful","Jealous","Contemptuous","Disgusted"]},
+    {label:"Mad",children:["Furious","Hostile","Aggressive","Volatile"]},
+    {label:"Critical",children:["Judgmental","Sarcastic","Cynical","Dismissive"]},
+    {label:"Distant",children:["Withdrawn","Numb","Suspicious","Isolated"]},
+  ]},
+  {label:"Sad",color:"#4A8FC0",children:[
+    {label:"Lonely",children:["Isolated","Abandoned","Excluded","Disconnected"]},
+    {label:"Guilty",children:["Ashamed","Remorseful","Regretful","Embarrassed"]},
+    {label:"Depressed",children:["Hopeless","Empty","Sorrowful","Gloomy"]},
+    {label:"Bored",children:["Apathetic","Indifferent","Listless","Lethargic"]},
+    {label:"Disappointed",children:["Let down","Dismayed","Disillusioned","Defeated"]},
+    {label:"Despair",children:["Powerless","Grief","Vulnerable","Fragile"]},
+  ]},
+  {label:"Scared",color:"#E09A30",children:[
+    {label:"Anxious",children:["Overwhelmed","Worried","Insecure","Panicked"]},
+    {label:"Rejected",children:["Excluded","Persecuted","Inadequate","Inferior"]},
+    {label:"Confused",children:["Uncertain","Indecisive","Perplexed","Doubtful"]},
+    {label:"Helpless",children:["Fragile","Victimized","Powerless","Submissive"]},
+    {label:"Horrified",children:["Shocked","Terrified","Disturbed","Appalled"]},
+    {label:"Weak",children:["Worthless","Insignificant","Incapable","Alone"]},
+  ]},
+  {label:"Joyful",color:"#5AA85A",children:[
+    {label:"Playful",children:["Creative","Energetic","Silly","Amused"]},
+    {label:"Content",children:["Peaceful","Fulfilled","Satisfied","Calm"]},
+    {label:"Interested",children:["Curious","Fascinated","Engaged","Attentive"]},
+    {label:"Proud",children:["Respected","Valued","Appreciated","Confident"]},
+    {label:"Excited",children:["Energized","Enthusiastic","Thrilled","Eager"]},
+    {label:"Happy",children:["Optimistic","Hopeful","Cheerful","Ecstatic"]},
+  ]},
+  {label:"Disgusted",color:"#50AFA0",children:[
+    {label:"Disapproving",children:["Judgmental","Appalled","Horrified","Shocked"]},
+    {label:"Revolted",children:["Repelled","Nauseated","Uncomfortable","Detestable"]},
+    {label:"Awful",children:["Terrible","Dreadful","Grim","Repulsed"]},
+    {label:"Loathing",children:["Abhorrence","Aversion","Revulsion","Contempt"]},
+  ]},
+  {label:"Surprised",color:"#C070C8",children:[
+    {label:"Excited",children:["Amazed","Energized","Eager","Astonished"]},
+    {label:"Confused",children:["Disillusioned","Perplexed","Awed","Stunned"]},
+    {label:"Amazed",children:["Awestruck","Astonished","Speechless","In disbelief"]},
+    {label:"Dismayed",children:["Unsettled","Alarmed","Startled","Rattled"]},
+  ]},
+  {label:"Bad",color:"#9A9080",children:[
+    {label:"Bored",children:["Indifferent","Apathetic","Listless","Unfocused"]},
+    {label:"Busy",children:["Rushed","Overwhelmed","Pressured","Stressed"]},
+    {label:"Stressed",children:["Out of control","Fragile","Shaky","Tense"]},
+    {label:"Tired",children:["Exhausted","Sleepy","Drained","Depleted"]},
+  ]},
+  {label:"Anticipation",color:"#D4804A",children:[
+    {label:"Interested",children:["Curious","Engaged","Attentive","Fascinated"]},
+    {label:"Impatient",children:["Eager","Tense","Restless","On edge"]},
+    {label:"Hopeful",children:["Optimistic","Encouraged","Trusting","Expectant"]},
+    {label:"Anxious",children:["Nervous","Worried","Apprehensive","Uneasy"]},
+  ]},
+];
+
+const defs={
+  "Embarrassed":"A self-conscious discomfort arising from feeling exposed or having made an error in front of others.",
+  "Betrayed":"The deep pain of having trust violated by someone you relied on.",
+  "Dismissed":"Feeling that your thoughts, feelings, or presence have been treated as unimportant.",
+  "Ridiculed":"Hurt from being mocked or made the object of others' laughter.",
+  "Nervous":"A state of unease or apprehension, often about an uncertain outcome.",
+  "Exposed":"The vulnerability of feeling seen in a way you didn't choose or aren't ready for.",
+  "Rejected":"The pain of being excluded, unwanted, or turned away by someone or something you valued.",
+  "Inadequate":"A sense that you fall short of what is needed or expected.",
+  "Resentful":"A persistent, smoldering anger toward someone you feel has wronged you.",
+  "Jealous":"Distress from perceiving a threat to something or someone you value — often involves fear of loss.",
+  "Contemptuous":"A feeling of superiority combined with disdain toward someone viewed as inferior or unworthy.",
+  "Disgusted":"A strong sense of aversion or repulsion, moral or physical.",
+  "Furious":"An intense, consuming anger that feels hard to contain.",
+  "Hostile":"An aggressive, combative stance toward others — ready for conflict.",
+  "Aggressive":"An urge to confront, attack, or dominate, driven by anger or frustration.",
+  "Volatile":"Emotionally unstable, prone to sudden and intense outbursts.",
+  "Judgmental":"Forming harsh, often premature verdicts about others' actions or character.",
+  "Sarcastic":"Using cutting humor or irony as a way of expressing contempt or frustration.",
+  "Cynical":"A distrustful belief that people are motivated primarily by self-interest.",
+  "Dismissive":"Treating others' concerns or ideas as not worth serious attention.",
+  "Withdrawn":"Pulling back from connection, conversation, or engagement as a protective response.",
+  "Numb":"An absence of feeling — emotional shutdown, often following overwhelming stress.",
+  "Suspicious":"Distrustful, expecting deception or harm from others.",
+  "Isolated":"Physically or emotionally separated from meaningful connection.",
+  "Abandoned":"The feeling of being left behind or deserted by someone important to you.",
+  "Excluded":"Left out of a group, conversation, or experience — a sense of not belonging.",
+  "Disconnected":"A sense that the usual bonds to people, meaning, or your own emotions have loosened.",
+  "Ashamed":"A painful sense that something is fundamentally wrong with you, not just your behavior.",
+  "Remorseful":"Genuine regret and pain over something you did that harmed someone else.",
+  "Regretful":"Wishing you had made a different choice, without necessarily self-blame.",
+  "Hopeless":"The belief that nothing will improve — that effort is pointless.",
+  "Empty":"A hollow absence of feeling or meaning, often after loss.",
+  "Sorrowful":"Deep, quiet grief — a heaviness in the heart.",
+  "Gloomy":"A pervasive low mood, as if a shadow has settled over everything.",
+  "Apathetic":"A lack of interest, motivation, or care — things that once mattered no longer do.",
+  "Indifferent":"Neither good nor bad feelings about something — a flat absence of preference.",
+  "Listless":"Lacking energy or enthusiasm, sluggish and aimless.",
+  "Lethargic":"A heavy, slow fatigue that makes action feel effortful.",
+  "Let down":"Disappointment from unmet expectations, especially from someone trusted.",
+  "Dismayed":"Distress or alarm upon discovering something unpleasant or unexpected.",
+  "Disillusioned":"The deflation of discovering that something you believed in wasn't what it seemed.",
+  "Defeated":"A sense of having lost — that effort is futile and resistance is pointless.",
+  "Powerless":"Unable to influence, change, or protect against what is happening.",
+  "Grief":"Deep sorrow following loss — of a person, relationship, or something meaningful.",
+  "Vulnerable":"Open to being hurt; exposed in a way that feels risky but can also be authentic.",
+  "Fragile":"Easily destabilized — a sense that you're close to breaking.",
+  "Overwhelmed":"More coming in than you can process — cognitively, emotionally, or practically.",
+  "Worried":"Repeated, anxious thoughts about potential bad outcomes.",
+  "Insecure":"Uncertainty about your own worth or how others perceive you.",
+  "Panicked":"An acute, intense fear response — often with physical symptoms.",
+  "Persecuted":"A sense of being unfairly targeted or singled out for harm.",
+  "Inferior":"Feeling lower in value, ability, or status compared to others.",
+  "Uncertain":"Lacking a clear sense of what is true, right, or going to happen.",
+  "Indecisive":"Unable to choose between options — often driven by fear of error or loss.",
+  "Perplexed":"Confused in a more intellectual way — unable to make sense of something.",
+  "Doubtful":"Questioning whether something is true, possible, or wise.",
+  "Victimized":"Feeling that you have been treated unjustly and that you are without recourse.",
+  "Submissive":"Deferring to others, sometimes from fear or a sense of unworthiness.",
+  "Shocked":"Stunned by something sudden and unexpected, especially something negative.",
+  "Terrified":"An extreme, debilitating fear response.",
+  "Disturbed":"Unsettled by something that violates your sense of how things should be.",
+  "Appalled":"Horrified and morally offended — shocked into disgust.",
+  "Worthless":"The painful belief that you have no value or that you don't matter.",
+  "Insignificant":"Feeling too small or unimportant to make a difference or be noticed.",
+  "Incapable":"Believing you lack the ability to do what is needed.",
+  "Alone":"Solitude experienced not as peace but as painful absence of connection.",
+  "Creative":"Energized by the impulse to make, imagine, or find new possibilities.",
+  "Energetic":"Full of vitality and readiness for action.",
+  "Silly":"Lighthearted and playful, not taking things too seriously.",
+  "Amused":"Finding something funny or entertaining — a light, pleasant enjoyment.",
+  "Peaceful":"A quiet, settled calm — absence of conflict or urgency.",
+  "Fulfilled":"A sense that what you're doing aligns with what matters — meaning satisfied.",
+  "Satisfied":"Pleased that something has gone well or met a need.",
+  "Calm":"A stable, untroubled state — neither excited nor distressed.",
+  "Curious":"Drawn to explore, understand, or discover — intellectually open.",
+  "Fascinated":"Deeply absorbed by something — attention held without effort.",
+  "Engaged":"Actively present and invested — the opposite of going through the motions.",
+  "Attentive":"Focused, alert, and taking things in carefully.",
+  "Respected":"Feeling that others acknowledge your value and treat you accordingly.",
+  "Valued":"Knowing that you matter to someone or something beyond yourself.",
+  "Appreciated":"Recognized for what you've done or who you are — seen and acknowledged.",
+  "Confident":"A solid trust in your own ability and judgment.",
+  "Energized":"Revitalized, with renewed capacity and drive.",
+  "Enthusiastic":"Full of keen interest and excitement about something.",
+  "Thrilled":"Intensely excited — joy with a physical charge.",
+  "Eager":"Ready and keen to begin — appetite for what's coming.",
+  "Optimistic":"Expecting that things will turn out well.",
+  "Hopeful":"Holding open the possibility of good outcomes, even with uncertainty.",
+  "Cheerful":"Noticeably upbeat and pleasant — a warm, mild happiness.",
+  "Ecstatic":"Extreme, expansive joy — almost beyond ordinary experience.",
+  "Horrified":"Extreme shock and moral revulsion combined.",
+  "Repelled":"Strongly pushed away — a visceral aversion.",
+  "Nauseated":"Feeling of sickness and disgust, physical or moral.",
+  "Uncomfortable":"Mildly distressed or uneasy — something isn't sitting right.",
+  "Terrible":"Deeply negative — a state where things feel very bad.",
+  "Dreadful":"A combination of fear and awfulness — anticipatory horror.",
+  "Grim":"Bleak, harsh, with little comfort available.",
+  "Repulsed":"Strongly revolted — pulled away from something offensive.",
+  "Abhorrence":"An intense, deep hatred or repugnance.",
+  "Aversion":"A strong dislike or reluctance toward something.",
+  "Revulsion":"Intense disgust causing a visceral desire to turn away.",
+  "Contempt":"A feeling that someone or something is beneath consideration or worthless.",
+  "Amazed":"Struck by something extraordinary — beyond what you expected.",
+  "Astonished":"Profoundly surprised — unable to fully process what's happened.",
+  "Awestruck":"Filled with wonder by something vast, powerful, or sublime.",
+  "Speechless":"So overwhelmed that words fail — emotional overload.",
+  "In disbelief":"The mind rejecting what the eyes or ears are telling it.",
+  "Unsettled":"Destabilized — your sense of security or normalcy has been disturbed.",
+  "Alarmed":"Suddenly fearful or concerned — something has signaled danger.",
+  "Startled":"Surprised by a sudden stimulus — a jolt of interrupted attention.",
+  "Rattled":"Flustered and temporarily knocked off your equilibrium.",
+  "Rushed":"Pressured by time — more to do than time allows.",
+  "Pressured":"External or internal forces pushing you toward something unwanted.",
+  "Stressed":"A sustained state of strain from demands exceeding your resources.",
+  "Out of control":"The distressing sense that things are happening beyond your influence.",
+  "Tense":"Physically and emotionally tight — braced for something bad.",
+  "Shaky":"Unstable, unsteady — lacking firm footing emotionally or physically.",
+  "Exhausted":"Deeply depleted — well beyond ordinary tiredness.",
+  "Sleepy":"A basic physical pull toward rest.",
+  "Drained":"Energy gone — emotionally or physically emptied out.",
+  "Depleted":"Resources — physical, emotional, or cognitive — run low.",
+  "Interested":"Drawn toward something — wanting to know more or get closer.",
+  "Impatient":"Frustrated by delay — wanting something to happen sooner.",
+  "Restless":"Unable to settle — a physical or mental urge to move or change.",
+  "On edge":"Heightened alertness and tension, expecting something to go wrong.",
+  "Encouraged":"Given reason to believe that effort or hope is warranted.",
+  "Trusting":"Confident that another person or situation is reliable and safe.",
+  "Expectant":"Waiting with anticipation — oriented toward what's coming.",
+  "Apprehensive":"Low-level anxiety about what's ahead — not full fear, but unease.",
+  "Uneasy":"A vague discomfort — something isn't right but you can't fully name it.",
+  "Awed":"Overwhelmed by something much larger than yourself.",
+  "Stunned":"Temporarily unable to respond — the mind absorbing a shock.",
+  "Detestable":"Worthy of intense disgust and hatred.",
+  "Unfocused":"Scattered, unable to concentrate or direct attention.",
+};
+
+const notes={
+  "Overwhelmed":"Often a sign you need to triage: what's actually urgent vs. what just feels urgent?",
+  "Anxious":"Anxiety is typically about the future. Grounding in the present moment can interrupt the loop.",
+  "Angry":"Anger often signals a boundary was crossed. Worth asking: what do you actually need here?",
+  "Sad":"Sadness is a signal of attachment — you can only grieve what mattered.",
+  "Ashamed":"Shame says 'I am bad.' Guilt says 'I did something bad.' They require different responses.",
+  "Guilty":"Guilt can be healthy (motivating repair) or destructive (punishing without purpose). Worth distinguishing.",
+  "Numb":"Numbness is often protection. The feelings are there — they're just on pause.",
+  "Lonely":"Loneliness doesn't always mean being alone. You can feel it in a crowd, or even in a relationship.",
+  "Hopeless":"Hopelessness often distorts time — what feels permanent rarely is.",
+  "Furious":"Very high arousal states impair judgment. Cooling down before deciding or speaking usually helps.",
+  "Betrayed":"Betrayal wounds trust, which is slow to rebuild and can't be forced.",
+  "Jealous":"Jealousy often flags something you value and fear losing — worth examining what that is.",
+  "Rejected":"Rejection is painful partly because social exclusion activates the same brain regions as physical pain.",
+  "Grief":"Grief isn't linear. It doesn't follow stages on a schedule.",
+  "Vulnerable":"Vulnerability isn't weakness. It's the cost of caring about anything.",
+  "Confused":"Confusion before clarity is normal. It often means you're thinking carefully about something that matters.",
+  "Embarrassed":"Embarrassment is almost always worse in your own head than in anyone else's.",
+  "Curious":"Curiosity tends to crowd out anxiety. Hard to feel both fully at once.",
+  "Excited":"High-arousal positive states are physiologically similar to anxiety. Naming it can help.",
+  "Confident":"Confidence is often less about certainty and more about trusting your ability to adapt.",
+  "Exhausted":"Rest is not laziness. Sustained output without recovery is just a slower form of breakdown.",
+  "Stressed":"Stress itself isn't always bad — it's chronic, unrelieved stress that causes damage.",
+  "Disappointed":"Disappointment is the gap between expectation and reality. Sometimes the expectation is the problem.",
+};
+
+let state={level:0,core:-1,sec:-1};
+let hovered=null;
+const canvas=document.getElementById('c');
+const ctx=canvas.getContext('2d');
+
+function lighten(hex,amt){
+  let r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return '#'+[Math.min(255,r+amt),Math.min(255,g+amt),Math.min(255,b+amt)].map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+
+function getSegments(){
+  const segs=[];
+  if(state.level===0){
+    const total=wheel.reduce((s,c)=>s+c.children.length,0);
+    let angle=-Math.PI/2;
+    wheel.forEach((core,ci)=>{
+      const span=(core.children.length/total)*2*Math.PI;
+      segs.push({type:'core',ci,sa:angle,ea:angle+span,color:core.color,label:core.label,r0:R0,r1:R3});
+      angle+=span;
+    });
+  } else if(state.level===1){
+    const core=wheel[state.core];
+    const n=core.children.length;
+    const span=2*Math.PI/n;
+    let angle=-Math.PI/2;
+    core.children.forEach((sec,si)=>{
+      segs.push({type:'sec',ci:state.core,si,sa:angle,ea:angle+span,color:lighten(core.color,40),label:sec.label,r0:R0,r1:R3});
+      angle+=span;
+    });
+  } else if(state.level===2){
+    const core=wheel[state.core];
+    const sec=core.children[state.sec];
+    const n=sec.children.length;
+    const span=2*Math.PI/n;
+    let angle=-Math.PI/2;
+    sec.children.forEach((sp,spi)=>{
+      segs.push({type:'sp',ci:state.core,si:state.sec,spi,sa:angle,ea:angle+span,color:lighten(core.color,70),label:sp,r0:R0,r1:R3});
+      angle+=span;
+    });
+  }
+  return segs;
+}
+
+function draw(){
+  ctx.clearRect(0,0,W,W);
+  const segs=getSegments();
+  const isDark=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+  segs.forEach((seg,i)=>{
+    const mid=(seg.sa+seg.ea)/2;
+    const isHov=hovered===i;
+    const r1=isHov?seg.r1+8:seg.r1;
+    ctx.beginPath();
+    ctx.moveTo(CX+seg.r0*Math.cos(seg.sa),CY+seg.r0*Math.sin(seg.sa));
+    ctx.arc(CX,CY,r1,seg.sa,seg.ea);
+    ctx.arc(CX,CY,seg.r0,seg.ea,seg.sa,true);
+    ctx.closePath();
+    ctx.fillStyle=seg.color;
+    ctx.fill();
+    ctx.strokeStyle=isDark?'rgba(0,0,0,0.5)':'rgba(255,255,255,0.8)';
+    ctx.lineWidth=1.5;
+    ctx.stroke();
+
+    const textR=(seg.r0+r1)/2;
+    const chars=seg.label.length;
+    const fontSize=chars>10?10:chars>7?11:12;
+    ctx.save();
+    ctx.translate(CX,CY);
+    ctx.rotate(mid+Math.PI/2);
+    ctx.textAlign='center';
+    ctx.textBaseline='middle';
+    ctx.font=`500 ${fontSize}px -apple-system,sans-serif`;
+    ctx.fillStyle=isDark?'rgba(255,255,255,0.9)':'rgba(0,0,0,0.75)';
+    const words=seg.label.split(' ');
+    if(words.length===1){
+      ctx.fillText(seg.label,0,-textR);
+    } else {
+      const l1=words.slice(0,Math.ceil(words.length/2)).join(' ');
+      const l2=words.slice(Math.ceil(words.length/2)).join(' ');
+      ctx.fillText(l1,0,-textR-6);
+      ctx.fillText(l2,0,-textR+6);
+    }
+    ctx.restore();
+  });
+
+  ctx.beginPath();
+  ctx.arc(CX,CY,R0,0,2*Math.PI);
+  ctx.fillStyle=isDark?'#1a1a1a':'#ffffff';
+  ctx.fill();
+  ctx.strokeStyle=isDark?'rgba(255,255,255,0.15)':'rgba(0,0,0,0.1)';
+  ctx.lineWidth=1;
+  ctx.stroke();
+
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  ctx.font=`500 11px -apple-system,sans-serif`;
+  ctx.fillStyle=isDark?'rgba(255,255,255,0.4)':'rgba(0,0,0,0.35)';
+  if(state.level===0) ctx.fillText('tap',CX,CY);
+  else { ctx.fillText('back',CX,CY-7); ctx.font=`400 9px -apple-system,sans-serif`; ctx.fillText('to core',CX,CY+6); }
+}
+
+function getSegAt(x,y){
+  const dx=x-CX,dy=y-CY;
+  const r=Math.sqrt(dx*dx+dy*dy);
+  if(r<R0||r>R3+10) return -1;
+  let angle=Math.atan2(dy,dx);
+  const segs=getSegments();
+  for(let i=0;i<segs.length;i++){
+    let sa=segs[i].sa,ea=segs[i].ea,a=angle;
+    while(a<sa) a+=2*Math.PI;
+    if(a<=ea) return i;
+  }
+  return -1;
+}
+
+canvas.addEventListener('mousemove',e=>{
+  const rect=canvas.getBoundingClientRect();
+  const sx=canvas.width/rect.width,sy=canvas.height/rect.height;
+  const x=(e.clientX-rect.left)*sx,y=(e.clientY-rect.top)*sy;
+  const dx=x-CX,dy=y-CY,r=Math.sqrt(dx*dx+dy*dy);
+  hovered=getSegAt(x,y);
+  canvas.style.cursor=(r<R0||hovered>=0)?'pointer':'default';
+  draw();
+});
+canvas.addEventListener('mouseleave',()=>{hovered=null;draw();});
+
+function handleClick(cx,cy){
+  const dx=cx-CX,dy=cy-CY,r=Math.sqrt(dx*dx+dy*dy);
+  if(r<R0&&state.level>0){
+    state={level:0,core:-1,sec:-1};
+    document.getElementById('detail').style.display='none';
+    document.getElementById('fw-sub').textContent='Click a segment to explore';
+    hovered=null;draw();return;
+  }
+  const idx=getSegAt(cx,cy);
+  if(idx<0) return;
+  const segs=getSegments();
+  const seg=segs[idx];
+  if(seg.type==='core'){
+    state={level:1,core:seg.ci,sec:-1};
+    document.getElementById('fw-sub').textContent=wheel[seg.ci].label+' — pick a secondary emotion';
+    document.getElementById('detail').style.display='none';
+    hovered=null;draw();
+  } else if(seg.type==='sec'){
+    state={level:2,core:seg.ci,sec:seg.si};
+    document.getElementById('fw-sub').textContent=wheel[seg.ci].children[seg.si].label+' — how specific?';
+    document.getElementById('detail').style.display='none';
+    hovered=null;draw();
+  } else if(seg.type==='sp'){
+    const cn=wheel[seg.ci].label,sn=wheel[seg.ci].children[seg.si].label,sp=seg.label;
+    document.getElementById('detail-name').textContent=sp;
+    document.getElementById('detail-path').textContent=cn+' › '+sn+' › '+sp;
+    document.getElementById('detail-def').textContent=defs[sp]||'A distinct emotional state worth sitting with and naming.';
+    const note=notes[sp]||notes[sn]||notes[cn]||'';
+    const noteEl=document.getElementById('detail-note');
+    noteEl.textContent=note; noteEl.style.display=note?'block':'none';
+    const det=document.getElementById('detail');
+    det.style.display='block';
+    det.style.borderLeftColor=wheel[seg.ci].color;
+    document.getElementById('fw-sub').textContent='';
+  }
+}
+
+canvas.addEventListener('click',e=>{
+  const rect=canvas.getBoundingClientRect();
+  handleClick((e.clientX-rect.left)*(canvas.width/rect.width),(e.clientY-rect.top)*(canvas.height/rect.height));
+});
+canvas.addEventListener('touchstart',e=>{
+  e.preventDefault();
+  const rect=canvas.getBoundingClientRect();
+  const t=e.touches[0];
+  handleClick((t.clientX-rect.left)*(canvas.width/rect.width),(t.clientY-rect.top)*(canvas.height/rect.height));
+},{passive:false});
+
+function goBack(){
+  if(state.level===2){state.level=1;state.sec=-1;document.getElementById('detail').style.display='none';document.getElementById('fw-sub').textContent=wheel[state.core].label+' — pick a secondary emotion';}
+  else if(state.level===1){state={level:0,core:-1,sec:-1};document.getElementById('detail').style.display='none';document.getElementById('fw-sub').textContent='Click a segment to explore';}
+  hovered=null;draw();
+}
+
+draw();
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',draw);
+</script>
+</body>
+</html>
