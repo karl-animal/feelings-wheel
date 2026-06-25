@@ -108,3 +108,7 @@ src/
 - Curriculum text is paraphrased and lives in code only; homework PDFs are never
   committed (git-ignored).
 - Nothing is ever auto-marked solid; you advance each behavior yourself.
+- Add-to-home-screen ready: a paw-print app icon (`public/`) and
+  `manifest.webmanifest` provide the home-screen icon, name, and theme color.
+  To regenerate the icons, edit and re-run the generator in your tooling of
+  choice — they're plain PNGs derived from `favicon.svg`.
