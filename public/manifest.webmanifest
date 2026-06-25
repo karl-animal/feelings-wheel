@@ -1,0 +1,16 @@
+{
+  "name": "Bennie's Training",
+  "short_name": "Bennie",
+  "description": "Track Bennie's obedience curriculum and log practice sessions.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f5f5f4",
+  "theme_color": "#0d9488",
+  "icons": [
+    { "src": "pwa-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "pwa-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

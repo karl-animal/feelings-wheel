@@ -29,6 +29,45 @@ export function downloadBackup(progress: ProgressMap, sessions: Session[]): void
   URL.revokeObjectURL(url);
 }
 
+// Cheap content signature (djb2 + length) used to detect whether the current
+// data differs from the last backup. Not cryptographic — just change detection.
+export function dataSignature(progress: ProgressMap, sessions: Session[]): string {
+  const str = JSON.stringify({ progress, sessions });
+  let h = 5381;
+  for (let i = 0; i < str.length; i++) {
+    h = (((h << 5) + h) + str.charCodeAt(i)) | 0;
+  }
+  return (h >>> 0).toString(36) + ":" + str.length;
+}
+
+// --- Backup metadata (UI-only; tracks when you last saved a copy) ---
+export type BackupKind = "exported" | "imported";
+
+export interface BackupMeta {
+  at: string; // ISO timestamp
+  sig: string; // data signature at that time
+  kind: BackupKind;
+}
+
+const META_KEY = "bennie-backup-meta-v1";
+
+export function loadBackupMeta(): BackupMeta | null {
+  try {
+    const raw = localStorage.getItem(META_KEY);
+    return raw ? (JSON.parse(raw) as BackupMeta) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveBackupMeta(meta: BackupMeta): void {
+  try {
+    localStorage.setItem(META_KEY, JSON.stringify(meta));
+  } catch {
+    // non-fatal
+  }
+}
+
 export interface ParsedBackup {
   progress?: ProgressMap;
   sessions?: Session[];
