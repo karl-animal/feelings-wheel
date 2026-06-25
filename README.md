@@ -70,7 +70,11 @@ especially before clearing data or switching devices.
   `{ app, version, progress, sessions }`.
 - **Import** reads that file back. It accepts the current format and the original
   app's exports (including a legacy progress-only file), so existing backups
-  restore cleanly.
+  restore cleanly. Because import **replaces** your current data, it shows a
+  confirmation first ("…replaces your current data with N exercises · M
+  sessions") so nothing is overwritten silently.
+- A **backup status line** tells you whether your data is backed up or has
+  changed since the last export/import, with a relative timestamp.
 - **Reset** clears all progress and logs (after a confirm). Export first.
 
 Exported backups contain personal data and are git-ignored

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { Suspense, lazy, useMemo, useState } from "react";
 import { COURSES, ALL_EXERCISE_IDS } from "./data/curriculum";
 import { useStore } from "./hooks/useStore";
 import { pctOf, solidOf } from "./lib/progress";
@@ -8,8 +8,12 @@ import { StatsCard } from "./components/StatsCard";
 import { LogSessionForm } from "./components/LogSessionForm";
 import { History } from "./components/History";
 import { Nudges } from "./components/Nudges";
-import { Trends } from "./components/Trends";
 import { CourseSection } from "./components/CourseSection";
+
+// Recharts is heavy, so the Trends card is code-split and loaded on demand.
+const Trends = lazy(() =>
+  import("./components/Trends").then((m) => ({ default: m.Trends }))
+);
 import { DataControls } from "./components/DataControls";
 
 export default function App() {
@@ -59,7 +63,13 @@ export default function App() {
 
         <Nudges progress={progress} sessions={sessions} onBump={cycleExercise} />
 
-        <Trends sessions={sessions} progress={progress} />
+        <Suspense
+          fallback={
+            <div className="bg-white rounded-xl border border-stone-200 p-5 mb-5 shadow-sm h-44 animate-pulse" />
+          }
+        >
+          <Trends sessions={sessions} progress={progress} />
+        </Suspense>
 
         <History sessions={sessions} totalMinutes={totalMinutes} onDelete={deleteSession} />
 
