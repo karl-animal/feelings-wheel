@@ -74,8 +74,7 @@ export function DataControls({
         </button>
       </div>
       <p className="font-mono text-[11px] text-stone-400 mt-2 leading-relaxed">
-        Progress and logs save to this device only — export a backup now and then. Housetraining stays a
-        separate, medical-first question.
+        Progress and logs save to this device only — export a backup now and then.
       </p>
     </div>
   );
