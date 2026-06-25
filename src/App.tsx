@@ -7,6 +7,7 @@ import { Header } from "./components/Header";
 import { StatsCard } from "./components/StatsCard";
 import { LogSessionForm } from "./components/LogSessionForm";
 import { History } from "./components/History";
+import { Nudges } from "./components/Nudges";
 import { Trends } from "./components/Trends";
 import { CourseSection } from "./components/CourseSection";
 import { DataControls } from "./components/DataControls";
@@ -55,6 +56,8 @@ export default function App() {
         />
 
         <LogSessionForm onLog={addSession} flash={flash} message={msg} />
+
+        <Nudges progress={progress} sessions={sessions} onBump={cycleExercise} />
 
         <Trends sessions={sessions} progress={progress} />
 

@@ -8,6 +8,19 @@ Beyond Basics), each split into weeks of exercises. Every exercise cycles
 Built with Vite + React + TypeScript + Tailwind. Progress and session logs are
 stored on-device (localStorage) behind a swappable storage interface.
 
+## Features
+
+- **Curriculum tracking** — three courses by week; tap an exercise to cycle its
+  state, with a little pop + paw-print flourish when a behavior goes Solid.
+- **Session log** — date, minutes, optional exercise tags, free-text notes;
+  weekly stats and a history list with per-entry delete.
+- **Trends** — minutes-per-week chart (Recharts), most-drilled exercises, and a
+  "Learning — could use a session" list, all derived from session tags.
+- **Nudges** — gentle, dismissable suggestions linking the log to progress
+  (e.g. "logged 6 sessions on Watch, still Learning — bump it to Solid?").
+  Tapping a nudge advances the state; nothing is ever auto-changed.
+- **Backup / restore** — export/import JSON; see below.
+
 ## Local development
 
 ```bash

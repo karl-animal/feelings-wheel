@@ -10,9 +10,26 @@ interface CourseSectionProps {
   onCycle: (id: string) => void;
 }
 
+// A few paw prints that float up when a behavior is marked Solid.
+const PAWS = [
+  { left: "-2px", rot: "-18deg", delay: "0ms" },
+  { left: "8px", rot: "10deg", delay: "70ms" },
+  { left: "18px", rot: "-6deg", delay: "140ms" },
+];
+
 export function CourseSection({ course, progress, onCycle }: CourseSectionProps) {
   const [open, setOpen] = useState(false);
+  // Exercise id currently playing its change animation, and whether it just
+  // hit Solid (which also triggers the paw burst).
+  const [pop, setPop] = useState<{ id: string; solid: boolean } | null>(null);
   const ids = course.weeks.flatMap((w) => w.ex.map((e) => e.id));
+
+  const handleCycle = (id: string) => {
+    const nextState = ((progress[id] ?? 0) + 1) % 3;
+    onCycle(id);
+    setPop({ id, solid: nextState === 2 });
+    window.setTimeout(() => setPop((p) => (p && p.id === id ? null : p)), 700);
+  };
 
   return (
     <section className="bg-white rounded-xl border border-stone-200 overflow-hidden shadow-sm">
@@ -45,18 +62,36 @@ export function CourseSection({ course, progress, onCycle }: CourseSectionProps)
                 {w.ex.map((e) => {
                   const st = progress[e.id] || 0;
                   const s = STATES[st];
+                  const isPopping = pop?.id === e.id;
                   return (
                     <li key={e.id}>
                       <button
-                        onClick={() => onCycle(e.id)}
+                        onClick={() => handleCycle(e.id)}
                         className="w-full text-left px-5 py-3 flex items-start gap-3 hover:bg-stone-50 transition-colors focus:outline-none focus:bg-stone-50"
                       >
-                        <span
-                          className={`mt-0.5 h-6 w-6 shrink-0 rounded-full ${s.dot} ${
-                            st ? "ring-2 ring-offset-1 " + s.ring : ""
-                          } flex items-center justify-center text-white text-xs font-bold transition-all`}
-                        >
-                          {st === 2 ? "✓" : ""}
+                        <span className="relative mt-0.5 shrink-0 h-6 w-6">
+                          <span
+                            className={`h-6 w-6 rounded-full ${s.dot} ${
+                              st ? "ring-2 ring-offset-1 " + s.ring : ""
+                            } flex items-center justify-center text-white text-xs font-bold transition-all ${
+                              isPopping ? "animate-pop" : ""
+                            }`}
+                          >
+                            {st === 2 ? "✓" : ""}
+                          </span>
+                          {isPopping && pop?.solid && (
+                            <span className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2">
+                              {PAWS.map((p, i) => (
+                                <span
+                                  key={i}
+                                  className="paw"
+                                  style={{ left: p.left, animationDelay: p.delay, ["--paw-rot" as string]: p.rot }}
+                                >
+                                  🐾
+                                </span>
+                              ))}
+                            </span>
+                          )}
                         </span>
                         <span className="flex-1 min-w-0">
                           <span className="flex items-baseline justify-between gap-2">
