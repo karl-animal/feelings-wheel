@@ -1,23 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0" stop-color="#10a99b" /><stop offset="1" stop-color="#0b7d72" />
-  </linearGradient></defs>
-  <rect width="512" height="512" rx="112" ry="112" fill="url(#g)" /><g transform="translate(0 0) scale(1)">
-    <ellipse cx="148" cy="244" rx="54" ry="104" fill="#b06a2c" transform="rotate(18 148 244)" />
-    <ellipse cx="364" cy="244" rx="54" ry="104" fill="#b06a2c" transform="rotate(-18 364 244)" />
-    <path fill="#cb7e39" d="M256 142
-      C 198 142, 166 174, 160 226
-      C 156 264, 168 300, 198 326
-      C 216 344, 234 366, 256 392
-      C 278 366, 296 344, 314 326
-      C 344 300, 356 264, 352 226
-      C 346 174, 314 142, 256 142 Z" />
-    <path fill="#fbf7f1" d="M256 272 L279 330 Q256 336 233 330 Z" />
-    <ellipse cx="256" cy="352" rx="31" ry="24" fill="#e0929e" />
-    <path d="M243 360 Q256 372 269 360" fill="none" stroke="#c2707d" stroke-width="4" stroke-linecap="round" />
-    <ellipse cx="206" cy="250" rx="16" ry="13" fill="#4a3620" />
-    <ellipse cx="306" cy="250" rx="16" ry="13" fill="#4a3620" />
-    <circle cx="211" cy="245" r="4.5" fill="#ffffff" />
-    <circle cx="311" cy="245" r="4.5" fill="#ffffff" />
-  </g>
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fbbf3c" /><stop offset="1" stop-color="#ef9d12" />
+    </linearGradient>
+    <filter id="blur" x="-20%" y="-20%" width="140%" height="140%">
+      <feOffset dy="7" /><feGaussianBlur stdDeviation="7" />
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="112" ry="112" fill="url(#g)" />
+  <g transform="translate(0 2)"><g filter="url(#blur)" opacity="0.18"><g fill="#7a4a05"><circle cx="150" cy="218" r="46" /><circle cx="214" cy="162" r="46" /><circle cx="298" cy="162" r="46" /><circle cx="362" cy="218" r="46" /><ellipse cx="256" cy="316" rx="104" ry="88" /></g></g></g>
+  <g fill="#ffffff"><circle cx="150" cy="218" r="46" /><circle cx="214" cy="162" r="46" /><circle cx="298" cy="162" r="46" /><circle cx="362" cy="218" r="46" /><ellipse cx="256" cy="316" rx="104" ry="88" /></g>
 </svg>
