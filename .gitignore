@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-ssr/
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor / OS
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# --- Public-repo safety ---
+# Never commit copyrighted homework PDFs (paraphrased text lives in code only).
+*.pdf
+# Never commit exported backups — they contain personal training data.
+bennie-backup-*.json
+*.backup.json
